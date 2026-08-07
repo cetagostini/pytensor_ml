@@ -1,0 +1,30 @@
+pytensor_ml/activations.py
+  h_d36ca8649a0e95 4,49,136-137,139-140,143,169
+pytensor_ml/base.py
+  h_d36ca8649a0e95 4,7,12-28,75
+pytensor_ml/layers/__init__.py
+  h_d36ca8649a0e95 21-27,43-44,48
+pytensor_ml/layers/norm.py
+  h_d36ca8649a0e95 6,34-48,93-98,103,358-453
+pytensor_ml/layers/positional.py
+  h_d36ca8649a0e95 1-335
+tests/dispatch/jax/test_positional.py
+  h_d36ca8649a0e95 1-45
+tests/test_layers.py
+  h_d36ca8649a0e95 13-22,232-297,363-364
+tests/test_positional.py
+  h_d36ca8649a0e95 1-329
+tests/test_serialize.py
+  h_d36ca8649a0e95 30,35,116-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.21",
+  "base_commit_sha": "d12124ce5bfc3165448514284a69c1030dab936d",
+  "prompts": {},
+  "humans": {
+    "h_d36ca8649a0e95": {
+      "author": "Carlos Trujillo <carlangastr@gmail.com>"
+    }
+  }
+}
