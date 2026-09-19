@@ -40,12 +40,12 @@ def _sdpa_graph(
     k = _repeat_kv(k, q.type.shape[-3], k.type.shape[-3])
     v = _repeat_kv(v, q.type.shape[-3], v.type.shape[-3])
 
-    compute_dtype = q.dtype
+    input_dtype = q.dtype
 
     if scale is None:
-        scale_t = 1.0 / pt.sqrt(q.shape[-1].astype(compute_dtype))
+        scale_t = 1.0 / pt.sqrt(q.shape[-1].astype(input_dtype))
     else:
-        scale_t = pt.as_tensor(scale, dtype=compute_dtype)
+        scale_t = pt.as_tensor(scale, dtype=input_dtype)
 
     scores = (q @ k.swapaxes(-1, -2)) * scale_t
 
@@ -55,7 +55,7 @@ def _sdpa_graph(
         # case) sees the whole prefix. Reduces to a plain lower triangle when sq == sk.
         q_idx = pt.arange(sq)[:, None]
         k_idx = pt.arange(sk)[None, :]
-        causal = pt.where(k_idx <= q_idx + (sk - sq), 0.0, -np.inf).astype(compute_dtype)
+        causal = pt.where(k_idx <= q_idx + (sk - sq), 0.0, -np.inf).astype(input_dtype)
         scores = scores + causal
 
     if mask is not None:
