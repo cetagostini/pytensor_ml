@@ -351,3 +351,54 @@ def test_attention_vectorizes_over_independent_inputs(rng):
 def test_multihead_attention_validates_head_counts(kwargs, message):
     with pytest.raises(ValueError, match=message):
         MultiheadAttention("mha", **kwargs)
+
+
+@pytest.mark.parametrize("is_causal", [False, True], ids=["full", "causal"])
+def test_sdpa_dtype_follows_input(is_causal, rng):
+    """The output dtype of scaled_dot_product_attention must match the input dtype, regardless of
+    ``config.floatX``.  Regression test for pymc-devs/pytensor-ml#164."""
+    b, n_head, seq, dim = 2, 3, 5, 4
+    q = pt.tensor("q", shape=(b, n_head, seq, dim), dtype="float32")
+    k = pt.tensor("k", shape=(b, n_head, seq, dim), dtype="float32")
+    v = pt.tensor("v", shape=(b, n_head, seq, dim), dtype="float32")
+    out = scaled_dot_product_attention(q, k, v, is_causal=is_causal)
+
+    q_np = rng.normal(size=q.type.shape).astype("float32")
+    k_np = rng.normal(size=k.type.shape).astype("float32")
+    v_np = rng.normal(size=v.type.shape).astype("float32")
+    result = out.eval({q: q_np, k: k_np, v: v_np})
+    assert result.dtype == "float32"
+
+
+def test_sdpa_dtype_with_explicit_scale(rng):
+    """An explicit float ``scale`` must not upcast a float32 graph to float64.
+    Regression test for pymc-devs/pytensor-ml#164."""
+    b, n_head, seq, dim = 2, 3, 5, 4
+    q = pt.tensor("q", shape=(b, n_head, seq, dim), dtype="float32")
+    k = pt.tensor("k", shape=(b, n_head, seq, dim), dtype="float32")
+    v = pt.tensor("v", shape=(b, n_head, seq, dim), dtype="float32")
+    out = scaled_dot_product_attention(q, k, v, scale=0.5)
+
+    q_np = rng.normal(size=q.type.shape).astype("float32")
+    k_np = rng.normal(size=k.type.shape).astype("float32")
+    v_np = rng.normal(size=v.type.shape).astype("float32")
+    result = out.eval({q: q_np, k: k_np, v: v_np})
+    assert result.dtype == "float32"
+
+
+def test_sdpa_dtype_with_same_dtype_mask(rng):
+    """A float32 additive mask combined with a causal mask must keep float32 output.
+    Regression test for pymc-devs/pytensor-ml#164."""
+    b, n_head, seq, dim = 2, 3, 5, 4
+    q = pt.tensor("q", shape=(b, n_head, seq, dim), dtype="float32")
+    k = pt.tensor("k", shape=(b, n_head, seq, dim), dtype="float32")
+    v = pt.tensor("v", shape=(b, n_head, seq, dim), dtype="float32")
+    mask = pt.tensor("mask", shape=(b, n_head, seq, seq), dtype="float32")
+    out = scaled_dot_product_attention(q, k, v, mask=mask, is_causal=True)
+
+    q_np = rng.normal(size=q.type.shape).astype("float32")
+    k_np = rng.normal(size=k.type.shape).astype("float32")
+    v_np = rng.normal(size=v.type.shape).astype("float32")
+    mask_np = rng.normal(size=mask.type.shape).astype("float32")
+    result = out.eval({q: q_np, k: k_np, v: v_np, mask: mask_np})
+    assert result.dtype == "float32"
